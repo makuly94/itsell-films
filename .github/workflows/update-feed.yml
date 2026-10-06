@@ -33,7 +33,7 @@ jobs:
       - name: Build feed (+15%)
         env:
           SOURCE_URL: ${{ secrets.SOURCE_URL }}
-          MIN_OFFERS: "1"          # в этом фиде мало товаров, поэтому порог низкий
+          MIN_OFFERS: "1000"          # в этом фиде мало товаров, поэтому порог низкий
         run: python markup_feed_films.py
 
       - uses: actions/upload-pages-artifact@v3
