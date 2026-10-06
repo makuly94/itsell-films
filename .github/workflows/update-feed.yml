@@ -1,0 +1,44 @@
+name: Update feed
+
+on:
+  schedule:
+    - cron: "42 * * * *"      # раз в час, в 42 минуты
+  workflow_dispatch:           # кнопка ручного запуска
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Build feed (+15%)
+        env:
+          SOURCE_URL: ${{ secrets.SOURCE_URL }}
+          MIN_OFFERS: "1"          # в этом фиде мало товаров, поэтому порог низкий
+        run: python markup_feed_films.py
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
