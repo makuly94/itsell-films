@@ -57,16 +57,20 @@ def main():
     stats = {"changed": 0, "zero": 0}
 
     def bump(m):
-        old = int(m.group(1))
+        attrs, num = m.group(1), m.group(2)
+        old = float(num)
         if old == 0:
             stats["zero"] += 1
             return m.group(0)
         stats["changed"] += 1
         new = int(old * MARKUP + 0.5)      # округление до целого
-        return f"<price>{new}</price>".encode()
+        return b"<price" + attrs + b">" + str(new).encode() + b"</price>"
 
-    # меняем только <price>целое</price>, остальной XML остаётся как есть
-    data = re.sub(rb"<price>(\d+)</price>", bump, data)
+    # меняем <price>число</price> (в т.ч. <price name="price">…), остальной XML не трогаем
+    data = re.sub(rb"<price((?:\s[^>]*)?)>(\d+(?:\.\d+)?)</price>", bump, data)
+
+    if stats["changed"] == 0:
+        sys.exit("Ни одна цена не изменена — формат фида неожиданный, публикация отменена.")
 
     # у некоторых товаров поставщик отдаёт пустой id и vendorCode —
     # подставляем номер товара из ссылки (…/1006210)
